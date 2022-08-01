@@ -7,7 +7,7 @@ import "@openzeppelin/contracts@4.4.2/utils/Strings.sol";
 
 contract Engram is ERC721A, Ownable {
     uint256 MAX_MINTS = 5;
-    uint256 MAX_SUPPLY = 4444;
+    uint256 MAX_SUPPLY = 3500;
     uint256 public mintRate = 0.002 ether;
 
     string public baseURI = "ipfs://QmdobLjA2JLHhQiGrHi5okmU7PWWa4femKFYbC4RDPXekW/";
