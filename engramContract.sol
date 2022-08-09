@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.16;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts@4.4.2/utils/Strings.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
-contract Engram is ERC721A, Ownable {
+contract Engram is ERC721A, Ownable, ERC2981 {
 
     enum Status {
         pausedSale,
@@ -24,6 +25,8 @@ contract Engram is ERC721A, Ownable {
         string memory name,
         string memory symbol,
         string memory baseURI_,
+        address payable royaltyReciever,
+        uint96 royaltyBasisPoints,
         uint256 maxSupply_,
         uint256 maxMints_,
         uint256 publicMintRate_,
@@ -31,6 +34,7 @@ contract Engram is ERC721A, Ownable {
     ) 
         ERC721A(name, symbol) {
             _baseTokenURI = baseURI_;
+            _setDefaultRoyalty(royaltyReciever, royaltyBasisPoints);
             maxSupply = maxSupply_;
             maxMints = maxMints_;
             publicMintRate = 1 ether * publicMintRate_ / 100;
@@ -82,9 +86,20 @@ contract Engram is ERC721A, Ownable {
        privateMintRate = 1 ether * _mintRate / 100;
     }
 
+    function setDefaultRoyalty(address receiver, uint96 basisPoints) public virtual onlyOwner {
+        _setDefaultRoyalty(receiver, basisPoints);
+    }
+
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         string memory baseURI_ = _baseURI();
         return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".json")) : "";
+    }
+
+    function supportsInterface (
+        bytes4 interfaceId
+    ) public view virtual override(ERC721A, ERC2981) returns (bool) {
+        return ERC721A.supportsInterface(interfaceId) || 
+        ERC2981.supportsInterface(interfaceId);
     }
 }
