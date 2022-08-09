@@ -1,2 +1,2 @@
 # engram-smart-contract
-contract for engram project
+smart contract for engram access pass
