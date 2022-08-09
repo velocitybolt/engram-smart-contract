@@ -6,26 +6,54 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts@4.4.2/utils/Strings.sol";
 
 contract Engram is ERC721A, Ownable {
-    uint256 MAX_MINTS = 5;
-    uint256 MAX_SUPPLY = 3500;
-    uint256 public mintRate = 0.002 ether;
 
-    string public baseURI = "ipfs://QmdobLjA2JLHhQiGrHi5okmU7PWWa4femKFYbC4RDPXekW/";
-    bool public revealed = false;
-
-    constructor() ERC721A("Engram", "ENG") {}
-
-    function mint(uint256 quantity) external payable {
-        require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "Exceeded the limit");
-        require(totalSupply() + quantity <= MAX_SUPPLY, "Not enough tokens left");
-        require(msg.value >= (mintRate * quantity), "Not enough ether sent");
-        _safeMint(msg.sender, quantity);
+    enum Status {
+        privateSale,
+        publicSale,
+        pausedSale
     }
 
-    function externalMint(uint256 quantity) external payable onlyOwner {
-        require(totalSupply() + quantity <= MAX_SUPPLY, "Not enough tokens left");
-        require(msg.value >= (mintRate * quantity), "Not enough ether sent");
-        _safeMint(msg.sender, quantity);
+    uint256 public immutable maxSupply;
+    uint256 public immutable maxMints;
+    uint256 public publicMintRate;
+    uint256 public privateMintRate;
+    string private _baseTokenURI;
+    Status public status;
+
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint256 maxSupply_,
+        uint256 maxMints_,
+        uint256 publicMintRate_,
+        uint256 privateMintRate_
+    ) 
+        ERC721A(name, symbol) {
+            maxSupply = maxSupply_;
+            maxMints = maxMints_;
+            publicMintRate = 1 ether * publicMintRate_ / 100;
+            privateMintRate = 1 ether * privateMintRate_ / 100;
+        }
+
+    function publicMint(uint256 _quantity) external payable {
+        require(status == Status.publicSale, "Public sale hasn't started yet!");
+        require(_quantity + _numberMinted(msg.sender) <= maxMints, "Exceeded the mint limit!");
+        require(totalSupply() + _quantity <= maxSupply, "Not enough passes left!");
+        require(msg.value >= (publicMintRate * _quantity), "Not enough ether sent! Please try again...");
+        _safeMint(msg.sender, _quantity);
+    }
+
+    function privateMint(uint256 _quantity) external payable {
+        require(status == Status.privateSale, "Private sale hasn't started yet!");
+        require(_quantity + _numberMinted(msg.sender) <= maxMints, "Exceeded the mint limit!");
+        require(totalSupply() + _quantity <= maxSupply, "Not enough passes left!");
+        require(msg.value >= (privateMintRate * _quantity), "Not enough ether sent! Please try again...");
+        _safeMint(msg.sender, _quantity);
+    }
+
+    function teamMint(uint256 _quantity, address _recipient) external onlyOwner {
+        require(totalSupply() + _quantity <= maxSupply, "Not enough passes left!");
+        _safeMint(_recipient, _quantity);
     }
 
     function withdraw() external payable onlyOwner {
@@ -33,27 +61,28 @@ contract Engram is ERC721A, Ownable {
     }
 
     function _baseURI() internal view override returns (string memory) {
-        return baseURI;
+        return _baseTokenURI;
     }
 
-    function changeBaseURI(string memory baseURI_) external onlyOwner {
-        baseURI = baseURI_;
-        revealed = true;
+    function changeBaseURI(string calldata baseURI) external onlyOwner {
+         _baseTokenURI = baseURI;
     }
 
-    function setMintRate(uint256 _mintRate) public onlyOwner {
-        mintRate = _mintRate;
+    function setStatus(Status _status) external onlyOwner {
+        status = _status;
+    }
+
+    function setPublicMintRate(uint256 _mintRate) public onlyOwner {
+       publicMintRate = 1 ether * _mintRate / 100;
+    }
+
+    function setPrivateMintRate(uint256 _mintRate) public onlyOwner {
+       privateMintRate = 1 ether * _mintRate / 100;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
         string memory baseURI_ = _baseURI();
-
-        if (revealed) {
-            return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".json")) : "";
-        } else {
-            return string(abi.encodePacked(baseURI_, "notRevealed.json"));
-        }
+        return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".json")) : "";
     }
 }
