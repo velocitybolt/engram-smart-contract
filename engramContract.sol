@@ -8,9 +8,9 @@ import "@openzeppelin/contracts@4.4.2/utils/Strings.sol";
 contract Engram is ERC721A, Ownable {
 
     enum Status {
-        privateSale,
+        pausedSale,
         publicSale,
-        pausedSale
+        privateSale
     }
 
     uint256 public immutable maxSupply;
@@ -23,12 +23,14 @@ contract Engram is ERC721A, Ownable {
     constructor(
         string memory name,
         string memory symbol,
+        string memory baseURI_,
         uint256 maxSupply_,
         uint256 maxMints_,
         uint256 publicMintRate_,
         uint256 privateMintRate_
     ) 
         ERC721A(name, symbol) {
+            _baseTokenURI = baseURI_;
             maxSupply = maxSupply_;
             maxMints = maxMints_;
             publicMintRate = 1 ether * publicMintRate_ / 100;
