@@ -73,8 +73,8 @@ contract Engram is ERC721A, Ownable, ERC2981 {
         return _baseTokenURI;
     }
 
-    function setContractURI(string calldata contractURI) public onlyOwner {
-        _contractURI = contractURI;
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
     }
 
     function changeBaseURI(string calldata baseURI) external onlyOwner {
@@ -95,6 +95,10 @@ contract Engram is ERC721A, Ownable, ERC2981 {
 
     function setDefaultRoyalty(address receiver, uint96 basisPoints) public virtual onlyOwner {
         _setDefaultRoyalty(receiver, basisPoints);
+    }
+
+    function setContractURI(string calldata contractURI_) public onlyOwner {
+        _contractURI = contractURI_;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
