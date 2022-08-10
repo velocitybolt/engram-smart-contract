@@ -18,6 +18,7 @@ contract Engram is ERC721A, Ownable, ERC2981 {
     uint256 public immutable maxMints;
     uint256 public publicMintRate;
     uint256 public privateMintRate;
+    string private _contractURI;
     string private _baseTokenURI;
     Status public status;
 
@@ -25,6 +26,7 @@ contract Engram is ERC721A, Ownable, ERC2981 {
         string memory name,
         string memory symbol,
         string memory baseURI_,
+        string memory contractURI_,
         address payable royaltyReciever,
         uint96 royaltyBasisPoints,
         uint256 maxSupply_,
@@ -34,6 +36,7 @@ contract Engram is ERC721A, Ownable, ERC2981 {
     ) 
         ERC721A(name, symbol) {
             _baseTokenURI = baseURI_;
+            _contractURI = contractURI_;
             _setDefaultRoyalty(royaltyReciever, royaltyBasisPoints);
             maxSupply = maxSupply_;
             maxMints = maxMints_;
@@ -68,6 +71,10 @@ contract Engram is ERC721A, Ownable, ERC2981 {
 
     function _baseURI() internal view override returns (string memory) {
         return _baseTokenURI;
+    }
+
+    function setContractURI(string calldata contractURI) public onlyOwner {
+        _contractURI = contractURI;
     }
 
     function changeBaseURI(string calldata baseURI) external onlyOwner {
