@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.7;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -59,7 +59,7 @@ contract Engram is ERC721A, Ownable, ERC2981 {
 
     function privateMint(uint256 _quantity, bytes32[] calldata proof_) external payable {
         require(status == Status.privateSale, "Private sale hasn't started yet!");
-        require(isValid(proof_, keccak256(abi.encodePacked(msg.sender))), "Not on the Allowlist!");
+        require(isVerified(proof_, keccak256(abi.encodePacked(msg.sender))), "Not on the Allowlist!");
         require(_quantity + _numberMinted(msg.sender) <= maxMints, "Exceeded the mint limit!");
         require(totalSupply() + _quantity <= maxSupply, "Not enough passes left!");
         require(msg.value >= (privateMintRate * _quantity), "Not enough ether sent! Please try again...");
@@ -84,12 +84,16 @@ contract Engram is ERC721A, Ownable, ERC2981 {
          _baseTokenURI = baseURI;
     }
 
-    function isValid(bytes32[] memory _proof, bytes32 leaf) internal view returns (bool) {
+    function isVerified(bytes32[] calldata _proof, bytes32 leaf) internal view returns (bool) {
         return MerkleProof.verify(_proof, _merkleRoot, leaf);
     }
 
     function setStatus(Status _status) external onlyOwner {
         status = _status;
+    }
+
+    function setMerkleRoot(bytes32 root_) external onlyOwner {
+        _merkleRoot = root_;
     }
 
     function setPublicMintRate(uint256 _mintRate) public onlyOwner {
